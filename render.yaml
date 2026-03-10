@@ -4,9 +4,9 @@ services:
     env: node
     buildCommand: >
       npm install &&
-      cd server && npx prisma generate &&
-      cd .. && cd client && npm run build &&
-      cd .. && cd server && npm run build
+      cd server && npm install && npx prisma generate &&
+      cd ../client && npm install && npm run build &&
+      cd ../server && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
