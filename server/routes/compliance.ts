@@ -10,6 +10,12 @@ import {
   requireAdmin,
   sanitizeUser
 } from '../middleware/auth.js';
+import { User } from '@prisma/client';
+
+// Helper to properly cast user from request
+function getTypedUser(reqUser: any): User {
+  return reqUser as User;
+}
 import { 
   notifyChangesRequested,
   notifyDealApproved,
@@ -126,7 +132,7 @@ router.get('/pending', requireAuth, requireAdmin, async (req: Request, res: Resp
 router.post('/:id/approve', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { notes } = req.body;
+    const { notes } = req.body as { notes?: string };
 
     const complianceItem = await prisma.complianceItem.findUnique({
       where: { id },
@@ -160,7 +166,7 @@ router.post('/:id/approve', requireAuth, requireAdmin, async (req: Request, res:
       where: { id },
       data: {
         status: 'approved',
-        reviewedById: req.user!.id,
+        reviewedById: getTypedUser(req.user).id,
         reviewedAt: new Date(),
         rejectionReason: null
       }
@@ -169,7 +175,7 @@ router.post('/:id/approve', requireAuth, requireAdmin, async (req: Request, res:
     // Create audit log
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         dealId: complianceItem.dealId,
         action: 'compliance_approved',
         details: {
@@ -188,7 +194,7 @@ router.post('/:id/approve', requireAuth, requireAdmin, async (req: Request, res:
     const { checkComplianceAndUpdateStatus } = await import('../lib/deal-status-flow.js');
     await checkComplianceAndUpdateStatus(complianceItem.dealId);
 
-    console.log(`✅ Compliance approved: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${req.user?.email}`);
+    console.log(`✅ Compliance approved: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${getTypedUser(req.user).email}`);
 
     res.json({
       success: true,
@@ -212,7 +218,7 @@ router.post('/:id/approve', requireAuth, requireAdmin, async (req: Request, res:
 router.post('/:id/reject', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { reason, notes } = req.body;
+    const { reason, notes } = req.body as { reason: string; notes?: string };
 
     if (!reason || !reason.trim()) {
       return res.status(400).json({
@@ -247,7 +253,7 @@ router.post('/:id/reject', requireAuth, requireAdmin, async (req: Request, res: 
       data: {
         status: 'rejected',
         rejectionReason: reason.trim(),
-        reviewedById: req.user!.id,
+        reviewedById: getTypedUser(req.user).id,
         reviewedAt: new Date()
       }
     });
@@ -255,7 +261,7 @@ router.post('/:id/reject', requireAuth, requireAdmin, async (req: Request, res: 
     // Create audit log
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         dealId: complianceItem.dealId,
         action: 'compliance_rejected',
         details: {
@@ -275,7 +281,7 @@ router.post('/:id/reject', requireAuth, requireAdmin, async (req: Request, res: 
     const { checkComplianceAndUpdateStatus } = await import('../lib/deal-status-flow.js');
     await checkComplianceAndUpdateStatus(complianceItem.dealId);
 
-    console.log(`❌ Compliance rejected: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${req.user?.email}`);
+    console.log(`❌ Compliance rejected: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${getTypedUser(req.user).email}`);
     console.log(`   Reason: ${reason.trim()}`);
 
     res.json({
@@ -300,7 +306,7 @@ router.post('/:id/reject', requireAuth, requireAdmin, async (req: Request, res: 
 router.post('/:id/waive', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { reason, notes } = req.body;
+    const { reason, notes } = req.body as { reason: string; notes?: string };
 
     if (!reason || !reason.trim()) {
       return res.status(400).json({
@@ -342,7 +348,7 @@ router.post('/:id/waive', requireAuth, requireAdmin, async (req: Request, res: R
       data: {
         status: 'waived',
         rejectionReason: reason.trim(),
-        reviewedById: req.user!.id,
+        reviewedById: getTypedUser(req.user).id,
         reviewedAt: new Date()
       }
     });
@@ -350,7 +356,7 @@ router.post('/:id/waive', requireAuth, requireAdmin, async (req: Request, res: R
     // Create audit log
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         dealId: complianceItem.dealId,
         action: 'compliance_waived',
         details: {
@@ -370,7 +376,7 @@ router.post('/:id/waive', requireAuth, requireAdmin, async (req: Request, res: R
     const { checkComplianceAndUpdateStatus } = await import('../lib/deal-status-flow.js');
     await checkComplianceAndUpdateStatus(complianceItem.dealId);
 
-    console.log(`⚠️ Compliance waived: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${req.user?.email}`);
+    console.log(`⚠️ Compliance waived: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${getTypedUser(req.user).email}`);
     console.log(`   Reason: ${reason.trim()}`);
 
     res.json({
@@ -395,7 +401,7 @@ router.post('/:id/waive', requireAuth, requireAdmin, async (req: Request, res: R
 router.post('/:id/reset', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { notes } = req.body;
+    const { notes } = req.body as { notes?: string };
 
     const complianceItem = await prisma.complianceItem.findUnique({
       where: { id },
@@ -438,7 +444,7 @@ router.post('/:id/reset', requireAuth, requireAdmin, async (req: Request, res: R
     // Create audit log
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         dealId: complianceItem.dealId,
         action: 'compliance_reset',
         details: {
@@ -454,7 +460,7 @@ router.post('/:id/reset', requireAuth, requireAdmin, async (req: Request, res: R
       }
     });
 
-    console.log(`🔄 Compliance reset: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${req.user?.email}`);
+    console.log(`🔄 Compliance reset: ${complianceItem.label} for deal ${complianceItem.deal.dealNumber} by ${getTypedUser(req.user).email}`);
 
     res.json({
       success: true,

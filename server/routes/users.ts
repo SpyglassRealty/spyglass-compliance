@@ -14,6 +14,12 @@ import {
   isValidEmail,
   isValidPassword
 } from '../middleware/auth.js';
+import { User } from '@prisma/client';
+
+// Helper to properly cast user from request
+function getTypedUser(reqUser: any): User {
+  return reqUser as User;
+}
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
@@ -200,7 +206,7 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
     }
 
     // Only super admins can create other admins
-    if ((role === 'admin' || role === 'super_admin') && req.user?.role !== 'super_admin') {
+    if ((role === 'admin' || role === 'super_admin') && getTypedUser(req.user).role !== 'super_admin') {
       return res.status(403).json({
         error: 'Insufficient permissions',
         message: 'Only super admins can create admin accounts'
@@ -240,7 +246,7 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
     // Log user creation
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         action: 'user_created',
         details: {
           createdUserId: newUser.id,
@@ -251,7 +257,7 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
       }
     });
 
-    console.log(`✅ User created: ${newUser.email} (${newUser.role}) by ${req.user?.email}`);
+    console.log(`✅ User created: ${newUser.email} (${newUser.role}) by ${getTypedUser(req.user).email}`);
 
     res.status(201).json({
       success: true,
@@ -360,7 +366,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
       // Only super admins can change roles to/from admin
       if ((role === 'admin' || role === 'super_admin' || 
            existingUser.role === 'admin' || existingUser.role === 'super_admin') 
-          && req.user?.role !== 'super_admin') {
+          && getTypedUser(req.user).role !== 'super_admin') {
         return res.status(403).json({
           error: 'Insufficient permissions',
           message: 'Only super admins can modify admin roles'
@@ -379,7 +385,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
     // Log user update
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         action: 'user_updated',
         details: {
           updatedUserId: updatedUser.id,
@@ -390,7 +396,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
       }
     });
 
-    console.log(`✅ User updated: ${updatedUser.email} by ${req.user?.email}`);
+    console.log(`✅ User updated: ${updatedUser.email} by ${getTypedUser(req.user).email}`);
 
     res.json({
       success: true,
@@ -428,7 +434,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Respo
     }
 
     // Prevent self-deletion
-    if (id === req.user?.id) {
+    if (id === getTypedUser(req.user).id) {
       return res.status(400).json({
         error: 'Cannot delete self',
         message: 'You cannot deactivate your own account'
@@ -437,7 +443,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Respo
 
     // Only super admins can deactivate other admins
     if ((existingUser.role === 'admin' || existingUser.role === 'super_admin') 
-        && req.user?.role !== 'super_admin') {
+        && getTypedUser(req.user).role !== 'super_admin') {
       return res.status(403).json({
         error: 'Insufficient permissions',
         message: 'Only super admins can deactivate admin accounts'
@@ -453,7 +459,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Respo
     // Log user deactivation
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         action: 'user_deactivated',
         details: {
           deactivatedUserId: deactivatedUser.id,
@@ -463,7 +469,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Respo
       }
     });
 
-    console.log(`✅ User deactivated: ${deactivatedUser.email} by ${req.user?.email}`);
+    console.log(`✅ User deactivated: ${deactivatedUser.email} by ${getTypedUser(req.user).email}`);
 
     res.json({
       success: true,
@@ -514,7 +520,7 @@ router.post('/:id/reactivate', requireAuth, requireSuperAdmin, async (req: Reque
     // Log user reactivation
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         action: 'user_reactivated',
         details: {
           reactivatedUserId: reactivatedUser.id,
@@ -524,7 +530,7 @@ router.post('/:id/reactivate', requireAuth, requireSuperAdmin, async (req: Reque
       }
     });
 
-    console.log(`✅ User reactivated: ${reactivatedUser.email} by ${req.user?.email}`);
+    console.log(`✅ User reactivated: ${reactivatedUser.email} by ${getTypedUser(req.user).email}`);
 
     res.json({
       success: true,
@@ -589,7 +595,7 @@ router.post('/:id/reset-password', requireAuth, requireAdmin, async (req: Reques
     // Log password reset
     await prisma.auditLog.create({
       data: {
-        userId: req.user!.id,
+        userId: getTypedUser(req.user).id,
         action: 'password_reset',
         details: {
           targetUserId: user.id,
@@ -599,7 +605,7 @@ router.post('/:id/reset-password', requireAuth, requireAdmin, async (req: Reques
       }
     });
 
-    console.log(`✅ Password reset for: ${user.email} by ${req.user?.email}`);
+    console.log(`✅ Password reset for: ${user.email} by ${getTypedUser(req.user).email}`);
 
     res.json({
       success: true,
