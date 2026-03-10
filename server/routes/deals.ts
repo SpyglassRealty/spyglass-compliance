@@ -14,7 +14,7 @@ import {
 import { generateDealNumber } from '../lib/deal-number-generator.js';
 import { generateComplianceItems } from '../lib/compliance-templates.js';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from '@prisma/client';
+import { User, DealStatus } from '@prisma/client';
 
 // Helper to properly cast user from request
 function getTypedUser(reqUser: any): User {
@@ -125,7 +125,7 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
  */
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const deal = await prisma.deal.findUnique({
       where: { id },
@@ -400,7 +400,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
  */
 router.put('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     // Check if deal exists and user has access
     const existingDeal = await prisma.deal.findUnique({
@@ -532,7 +532,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
  */
 router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const deal = await prisma.deal.findUnique({
       where: { id },
@@ -664,7 +664,7 @@ router.get('/stats/overview', requireAuth, async (req: Request, res: Response) =
  */
 router.post('/:id/status', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status, reason } = req.body as { status: string; reason?: string };
 
     if (!status) {
@@ -686,7 +686,7 @@ router.post('/:id/status', requireAuth, async (req: Request, res: Response) => {
     // Import here to avoid circular dependency
     const { updateDealStatus } = await import('../lib/deal-status-flow.js');
     
-    const result = await updateDealStatus(id, status, getTypedUser(req.user).id, reason);
+    const result = await updateDealStatus(id, status as DealStatus, getTypedUser(req.user).id, reason);
 
     if (!result.success) {
       return res.status(400).json({

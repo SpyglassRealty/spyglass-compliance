@@ -30,13 +30,11 @@ const router = Router();
  */
 router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { 
-      role, 
-      search, 
-      active,
-      limit = '50',
-      offset = '0'
-    } = req.query;
+    const role = req.query.role as string;
+    const search = req.query.search as string;
+    const active = req.query.active as string;
+    const limit = (req.query.limit as string) || '50';
+    const offset = (req.query.offset as string) || '0';
 
     // Build filter conditions
     const where: any = {};
@@ -99,7 +97,7 @@ router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) =
  */
 router.get('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -280,7 +278,7 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
  */
 router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const {
       email,
       firstName,
@@ -419,7 +417,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
  */
 router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     // Get existing user
     const existingUser = await prisma.user.findUnique({
@@ -492,7 +490,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Respo
  */
 router.post('/:id/reactivate', requireAuth, requireSuperAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const user = await prisma.user.findUnique({
       where: { id }
@@ -553,7 +551,7 @@ router.post('/:id/reactivate', requireAuth, requireSuperAdmin, async (req: Reque
  */
 router.post('/:id/reset-password', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { newPassword } = req.body;
 
     if (!newPassword) {

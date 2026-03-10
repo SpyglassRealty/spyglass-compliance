@@ -36,7 +36,7 @@ const router = Router();
  */
 router.post('/upload/:dealId', requireAuth, uploadMultiple, handleUploadError, async (req: Request, res: Response) => {
   try {
-    const { dealId } = req.params;
+    const dealId = req.params.dealId as string;
     const { complianceItemId, description, extractContract } = req.body;
     const files = req.files as Express.Multer.File[];
 
@@ -206,7 +206,7 @@ router.post('/upload/:dealId', requireAuth, uploadMultiple, handleUploadError, a
  */
 router.get('/deal/:dealId', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { dealId } = req.params;
+    const dealId = req.params.dealId as string;
 
     // Verify deal exists and user has access
     const deal = await prisma.deal.findUnique({
@@ -287,7 +287,7 @@ router.get('/deal/:dealId', requireAuth, async (req: Request, res: Response) => 
  */
 router.get('/:id/download', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const document = await prisma.document.findUnique({
       where: { id },
@@ -366,7 +366,7 @@ router.get('/:id/download', requireAuth, async (req: Request, res: Response) => 
  */
 router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const document = await prisma.document.findUnique({
       where: { id },
