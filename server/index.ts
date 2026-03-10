@@ -7,7 +7,12 @@ import express from 'express';
 import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { PrismaClient } from '@prisma/client';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Environment variables
 const PORT = process.env.PORT || 3000;
