@@ -53,8 +53,8 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     
     // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { 
+    const user = await prisma.user.findFirst({
+      where: {
         email: email.toLowerCase(),
         isActive: true
       }
