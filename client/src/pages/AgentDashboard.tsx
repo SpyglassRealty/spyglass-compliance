@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { User, Deal } from '../types'
+import { User, Deal, Page } from '../types'
 
 interface AgentDashboardProps {
   user: User
-  onNavigate: (page: 'dashboard' | 'new-deal') => void
+  onNavigate: (page: Page) => void
   onLogout: () => void
 }
 
@@ -56,7 +56,7 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
   }
 
   const getStatusBadge = (status: string) => {
-    const statusColors = {
+    const statusColors: Record<string, string> = {
       draft: 'bg-gray-100 text-gray-800',
       submitted: 'bg-blue-100 text-blue-800',
       in_review: 'bg-yellow-100 text-yellow-800',
@@ -65,10 +65,10 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
       closed: 'bg-gray-600 text-white',
       cancelled: 'bg-red-100 text-red-800'
     }
-    
+
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
-        {status.replace('_', ' ')}
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
+        {status.replace(/_/g, ' ')}
       </span>
     )
   }
@@ -110,10 +110,18 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
                 Welcome, {user.firstName} {user.lastName}
               </span>
               <span className={`px-2 py-1 text-xs rounded-full ${
-                user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                user.role === 'admin' || user.role === 'super_admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
               }`}>
                 {user.role}
               </span>
+              {(user.role === 'admin' || user.role === 'super_admin') && (
+                <button
+                  onClick={() => onNavigate({ name: 'admin-deals' })}
+                  className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+                >
+                  Admin Queue
+                </button>
+              )}
               <button
                 onClick={onLogout}
                 className="text-sm text-gray-500 hover:text-gray-700"
@@ -132,53 +140,34 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total Deals</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.total}</dd>
-                    </dl>
-                  </div>
-                </div>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Deals</dt>
+                  <dd className="text-lg font-medium text-gray-900">{stats.total}</dd>
+                </dl>
               </div>
             </div>
-
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">In Review</dt>
-                      <dd className="text-lg font-medium text-yellow-600">{stats.inReview}</dd>
-                    </dl>
-                  </div>
-                </div>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">In Review</dt>
+                  <dd className="text-lg font-medium text-yellow-600">{stats.inReview}</dd>
+                </dl>
               </div>
             </div>
-
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Approved</dt>
-                      <dd className="text-lg font-medium text-green-600">{stats.approved}</dd>
-                    </dl>
-                  </div>
-                </div>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Approved</dt>
+                  <dd className="text-lg font-medium text-green-600">{stats.approved}</dd>
+                </dl>
               </div>
             </div>
-
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="p-5">
-                <div className="flex items-center">
-                  <div className="w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Closed</dt>
-                      <dd className="text-lg font-medium text-gray-600">{stats.closed}</dd>
-                    </dl>
-                  </div>
-                </div>
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Closed</dt>
+                  <dd className="text-lg font-medium text-gray-600">{stats.closed}</dd>
+                </dl>
               </div>
             </div>
           </div>
@@ -187,7 +176,7 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
         {/* Actions */}
         <div className="mb-8">
           <button
-            onClick={() => onNavigate('new-deal')}
+            onClick={() => onNavigate({ name: 'new-deal' })}
             className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md text-sm font-medium"
           >
             Create New Deal
@@ -209,7 +198,11 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
               </li>
             ) : (
               deals.map((deal) => (
-                <li key={deal.id} className="px-6 py-4 hover:bg-gray-50">
+                <li
+                  key={deal.id}
+                  className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onNavigate({ name: 'deal-detail', dealId: deal.id })}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="flex-shrink-0">
@@ -220,7 +213,7 @@ export default function AgentDashboard({ user, onNavigate, onLogout }: AgentDash
                           {deal.propertyAddress}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {deal.city}, {deal.state} {deal.zip} • {deal.dealType.replace('_', ' ')}
+                          {deal.city}, {deal.state} {deal.zip} &middot; {deal.dealType.replace(/_/g, ' ')}
                         </div>
                       </div>
                     </div>

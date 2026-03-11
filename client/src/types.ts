@@ -23,13 +23,20 @@ export interface Deal {
   salePrice?: number
   leasePrice?: number
   closingDate?: string
+  contractDate?: string
+  earnestMoney?: number
+  optionFee?: number
+  titleCompany?: string
+  lenderName?: string
   buyerName?: string
   sellerName?: string
   tenantName?: string
+  jointlyDealUrl?: string
   notes?: string
   createdAt: string
   updatedAt: string
   agent?: User
+  complianceItems?: ComplianceItem[]
 }
 
 export interface ComplianceItem {
@@ -41,6 +48,11 @@ export interface ComplianceItem {
   status: 'pending' | 'uploaded' | 'approved' | 'rejected' | 'waived'
   rejectionReason?: string
   reviewedAt?: string
+  reviewedBy?: {
+    firstName: string
+    lastName: string
+    email: string
+  }
   documents?: Array<{
     id: string
     filename: string
@@ -48,3 +60,11 @@ export interface ComplianceItem {
     createdAt: string
   }>
 }
+
+export type Page =
+  | { name: 'login' }
+  | { name: 'dashboard' }
+  | { name: 'new-deal' }
+  | { name: 'deal-detail'; dealId: string }
+  | { name: 'admin-deals' }
+  | { name: 'admin-deal-detail'; dealId: string }

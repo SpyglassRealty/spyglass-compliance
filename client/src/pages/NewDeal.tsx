@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { User } from '../types'
+import { User, Page } from '../types'
 
 interface NewDealProps {
   user: User
-  onNavigate: (page: 'dashboard' | 'new-deal') => void
+  onNavigate: (page: Page) => void
   onLogout: () => void
 }
 
@@ -84,8 +84,8 @@ export default function NewDeal({ user, onNavigate, onLogout }: NewDealProps) {
       if (response.ok) {
         setSuccess(`Deal ${data.deal.dealNumber} created successfully!`)
         setTimeout(() => {
-          onNavigate('dashboard')
-        }, 2000)
+          onNavigate({ name: 'deal-detail', dealId: data.deal.id })
+        }, 1000)
       } else {
         setError(data.message || 'Failed to create deal')
       }
@@ -104,7 +104,7 @@ export default function NewDeal({ user, onNavigate, onLogout }: NewDealProps) {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <button
-                onClick={() => onNavigate('dashboard')}
+                onClick={() => onNavigate({ name: 'dashboard' })}
                 className="text-teal-600 hover:text-teal-500 mr-4"
               >
                 ← Back
@@ -386,7 +386,7 @@ export default function NewDeal({ user, onNavigate, onLogout }: NewDealProps) {
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => onNavigate('dashboard')}
+                  onClick={() => onNavigate({ name: 'dashboard' })}
                   className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                 >
                   Cancel
